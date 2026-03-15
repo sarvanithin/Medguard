@@ -163,26 +163,103 @@ PHI engine options:
 ## Architecture
 
 ```
-User input
+User Input
     │
     ▼
-[PHI Detection] ──── redact / block
-    │
-[Scope Enforcement] ── warn / block
-    │
-[Drug Safety Check] ── warn / block  ◄── OpenFDA API + RxNorm + static table
+MedGuard.achat("I take warfarin and aspirin, SSN 123-45-6789")
     │
     ▼
-   LLM
+GuardrailPipeline.run(text)
     │
-    ▼
-[Hallucination Detection] ── flag / block  ◄── RxNorm + SNOMED bundle
+    ├─── Stage 1: INPUT (runs sequentially)
+    │         │
+    │         ├─ PHIDetector.detect(text)
+    │         │       RegexPHIEngine scans with compiled regexes
+    │         │       → matches: [{SSN, "123-45-6789"}]
+    │         │       → processed: "I take warfarin and aspirin, SSN [REDACTED]"
+    │         │       mode=redact → stores redacted text in ctx.processed_input
+    │         │       mode=block  → sets ctx.blocked=True, stops here
+    │         │
+    │         └─ ScopeEnforcer.check(text)
+    │                 KeywordScopeClassifier scans for clinical vs out-of-scope keywords
+    │                 → in_scope=True (has "take", drug names)
+    │                 action=warn  → appends to ctx.warnings
+    │                 action=block → sets ctx.blocked=True, stops here
     │
-    ▼
-Annotated response
+    ├─── Stage 2: PRE-LLM (runs if not blocked)
+    │         │
+    │         └─ DrugSafetyChecker.check(ctx.processed_input)
+    │                 DrugMentionExtractor pulls drug names via regex
+    │                 → ["warfarin", "aspirin"]
+    │                 RxNormClient.get_rxcui("warfarin") → "202421"  (disk cached)
+    │                 RxNormClient.get_rxcui("aspirin")  → "1191"    (disk cached)
+    │                 OpenFDAClient.get_drug_interactions("warfarin", "aspirin")
+    │                 → fetches label text, _parse_severity() → HIGH
+    │                 StaticTable.lookup("warfarin", "aspirin") → HIGH (offline fallback)
+    │                 → ctx.warnings.append("Drug interaction: warfarin+aspirin HIGH")
+    │                 severity >= threshold → ctx.blocked=True (if block mode)
+    │
+    ├─── Stage 3: LLM CALL (runs if not blocked)
+    │         │
+    │         └─ LLMCaller.call(ctx.processed_input)
+    │                 AnthropicCaller  → anthropic SDK  → claude-haiku / claude-sonnet
+    │                 OpenAICaller     → openai SDK     → gpt-4o
+    │                 OpenAICaller     → httpx raw      → ollama:11434/v1 (local)
+    │                 → ctx.llm_response = "Warfarin and aspirin together..."
+    │
+    └─── Stage 4: POST-LLM (runs on LLM output)
+              │
+              ├─ 4a. HallucinationDetector.check(ctx.llm_response)
+              │         asyncio.gather() runs 3 sub-checks concurrently:
+              │         ├─ _check_drug_names()
+              │         │     _DRUG_MENTION_RE finds drug-like tokens
+              │         │     RxNormClient.validate_drug_exists("xyzitol") → False
+              │         │     → flag: FAKE_DRUG_NAME
+              │         ├─ _check_dosages()
+              │         │     _DOSAGE_RE finds "ibuprofen 10000mg"
+              │         │     MAX_DOSES["ibuprofen"] = 3200
+              │         │     10000 > 3200 * 1.5 → flag: IMPOSSIBLE_DOSAGE
+              │         └─ _check_confident_claims()
+              │               _CONFIDENT_RE finds "definitely", "always"
+              │               → flag: CONFIDENT_UNSUPPORTED_CLAIM
+              │         score = weighted sum of flags
+              │         score >= threshold → ctx.blocked=True
+              │         _annotate_text() → inlines [WARNING:...] in response
+              │
+              └─ 4b. FactVerifier.verify(ctx.llm_response)  [opt-in]
+                        _extract_claims() → regex extracts falsifiable claims
+                        → ["max dose of ibuprofen is 3000mg", "aspirin inhibits COX-2"]
+                        PubMedClient.search("ibuprofen max dose") → [PMIDs]
+                        PubMedClient.fetch_abstracts([PMIDs]) → abstracts
+                        _score_evidence() → supporting / contradicting
+                        → ctx.processed_output += "[FACT-CHECK: See PMIDs: 12345678]"
 ```
 
-Each guardrail runs in an isolated `try/except` — an API timeout in drug safety never blocks the full request.
+```
+PipelineContext returned to caller:
+{
+  original_input:        "I take warfarin and aspirin, SSN 123-45-6789"
+  processed_input:       "I take warfarin and aspirin, SSN [REDACTED]"
+  phi_result:            { phi_detected: True, matches: [SSN] }
+  drug_result:           { interactions: [warfarin+aspirin HIGH], blocked: False }
+  llm_response:          "Warfarin and aspirin together can increase bleeding risk..."
+  hallucination_result:  { flags: [], score: 0.0 }
+  fact_check_result:     { claims_checked: 2, verified: 2, confidence: 0.85 }
+  processed_output:      same as llm_response (clean — no flags triggered)
+  warnings:              ["Drug interaction: warfarin + aspirin (high)"]
+  blocked:               False
+  processing_time_ms:    312.4
+}
+```
+
+**Key design decisions:**
+
+- **Each stage is isolated in `try/except`** — if OpenFDA times out, drug safety fails silently and the request continues. Nothing crashes the full pipeline.
+- **`PipelineContext` is the single mutable state object** — passed through all stages, each stage writes its results onto it. No hidden globals.
+- **Streaming path** — stages 1+2 run synchronously before the first token, LLM streams to a buffer, stages 4a+4b run on the complete buffer before the final SSE flush.
+- **Caching inside knowledge clients** — RxNorm and OpenFDA responses are cached on disk via `diskcache`. Repeated drug lookups are instant.
+- **`MedGuard` is only a wiring layer** — it instantiates all components at `__init__` time and hands them to `GuardrailPipeline`. The pipeline itself has no knowledge of config or components — it just calls whatever it receives.
+- **PubMed fact verification is opt-in** — enabled via `MEDGUARD_GUARDRAILS__FACT_CHECKING__ENABLED=true`. Requires network; disabled by default to keep latency low.
 
 ## NeMo Guardrails integration
 
@@ -238,6 +315,7 @@ pytest tests/ -m integration         # hits real OpenFDA / RxNorm APIs
 | [RxNorm API](https://rxnav.nlm.nih.gov/) | Drug name normalization |
 | [OpenFDA Drug Labels](https://open.fda.gov/apis/drug/label/) | Interaction + contraindication text |
 | [OpenFDA Adverse Events](https://open.fda.gov/apis/drug/event/) | Adverse event counts |
+| [PubMed / NCBI E-utilities](https://www.ncbi.nlm.nih.gov/home/develop/api/) | Fact verification against peer-reviewed literature |
 | Bundled SNOMED-CT subset | Medical terminology validation |
 | Curated static table | Highest-risk drug pairs (offline fallback) |
 

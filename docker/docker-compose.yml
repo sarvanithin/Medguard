@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  medguard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # LLM provider — set one of these
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+      # Guardrail configuration via env overrides
+      MEDGUARD_LLM__PROVIDER: ${MEDGUARD_LLM_PROVIDER:-anthropic}
+      MEDGUARD_LLM__MODEL: ${MEDGUARD_LLM_MODEL:-claude-haiku-4-5-20251001}
+      MEDGUARD_GUARDRAILS__PHI_DETECTION__ENABLED: "true"
+      MEDGUARD_GUARDRAILS__PHI_DETECTION__MODE: "redact"
+      MEDGUARD_GUARDRAILS__DRUG_SAFETY__ENABLED: "true"
+      MEDGUARD_GUARDRAILS__DRUG_SAFETY__SEVERITY_THRESHOLD: "moderate"
+      MEDGUARD_GUARDRAILS__SCOPE_ENFORCEMENT__ENABLED: "true"
+      MEDGUARD_GUARDRAILS__HALLUCINATION_DETECTION__ENABLED: "true"
+      MEDGUARD_API__LOG_LEVEL: "INFO"
+    volumes:
+      - medguard_config:/config
+      - medguard_cache:/cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Uncomment for air-gapped clinical deployments (requires NLM RxNorm license)
+  # rxnorm-local:
+  #   image: nlmnih/rxnav-in-a-box:latest
+  #   ports:
+  #     - "4000:4000"
+  #   volumes:
+  #     - rxnorm_data:/data
+  #   environment:
+  #     RXNAV_PORT: "4000"
+  # Then set: MEDGUARD_KNOWLEDGE__RXNORM_BASE_URL=http://rxnorm-local:4000/REST
+
+volumes:
+  medguard_config:
+  medguard_cache:
+  # rxnorm_data:

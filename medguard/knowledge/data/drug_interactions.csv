@@ -1,0 +1,47 @@
+drug_a,drug_b,severity,description,source
+warfarin,aspirin,high,Concurrent use of warfarin and aspirin significantly increases bleeding risk. Both inhibit platelet function and clotting factors. Monitor INR closely; this combination should generally be avoided.,clinical_reference
+warfarin,ibuprofen,high,NSAIDs like ibuprofen inhibit platelet aggregation and can cause GI bleeding. Combined with warfarin anticoagulation this creates serious hemorrhage risk.,clinical_reference
+warfarin,naproxen,high,Naproxen (NSAID) combined with warfarin increases bleeding risk via dual antiplatelet and anticoagulant effect. Avoid concurrent use.,clinical_reference
+warfarin,metronidazole,high,Metronidazole inhibits CYP2C9 significantly increasing warfarin plasma levels and bleeding risk. INR may double. Monitor closely or use alternative antibiotic.,clinical_reference
+warfarin,fluconazole,high,Fluconazole is a strong CYP2C9 inhibitor that dramatically increases warfarin exposure. Can cause serious bleeding. Reduce warfarin dose and monitor INR.,clinical_reference
+warfarin,amiodarone,contraindicated,Amiodarone potently inhibits warfarin metabolism leading to markedly elevated INR and life-threatening bleeding. This combination requires extreme caution and INR monitoring.,clinical_reference
+warfarin,rifampin,high,Rifampin is a powerful CYP450 inducer that drastically reduces warfarin levels potentially leading to thromboembolism. Avoid concurrent use.,clinical_reference
+warfarin,carbamazepine,high,Carbamazepine induces CYP2C9 reducing warfarin efficacy. Thrombotic risk increases. Monitor INR and adjust warfarin dose.,clinical_reference
+sertraline,phenelzine,contraindicated,Combining SSRIs with MAOIs like phenelzine causes potentially fatal serotonin syndrome: hyperthermia agitation muscle rigidity seizures. Contraindicated. Allow 14-day washout.,clinical_reference
+fluoxetine,phenelzine,contraindicated,SSRI plus MAOI combination is contraindicated due to risk of fatal serotonin syndrome. Allow 14-day washout period between fluoxetine and phenelzine.,clinical_reference
+escitalopram,phenelzine,contraindicated,SSRIs and MAOIs must not be co-administered due to risk of fatal serotonin syndrome. Contraindicated combination.,clinical_reference
+tramadol,phenelzine,contraindicated,Tramadol combined with MAOIs can cause serotonin syndrome and seizures. This combination is contraindicated.,clinical_reference
+simvastatin,amiodarone,high,Amiodarone inhibits CYP3A4 increasing simvastatin levels and risk of myopathy and rhabdomyolysis. Limit simvastatin dose to 20mg/day with amiodarone.,clinical_reference
+simvastatin,clarithromycin,contraindicated,Clarithromycin strongly inhibits CYP3A4 dramatically increasing simvastatin levels causing rhabdomyolysis risk. Contraindicated; hold statin during antibiotic course.,clinical_reference
+atorvastatin,clarithromycin,high,Clarithromycin inhibits CYP3A4 increasing atorvastatin exposure and myopathy risk. Limit atorvastatin to 20mg/day or use alternative antibiotic.,clinical_reference
+simvastatin,itraconazole,contraindicated,Itraconazole strongly inhibits CYP3A4 causing marked increase in simvastatin levels and high risk of severe myopathy or rhabdomyolysis. Contraindicated.,clinical_reference
+clopidogrel,omeprazole,moderate,Omeprazole inhibits CYP2C19 reducing activation of clopidogrel to its active form. This may reduce antiplatelet efficacy and increase cardiovascular risk.,clinical_reference
+digoxin,amiodarone,high,Amiodarone inhibits P-glycoprotein increasing digoxin levels potentially causing digoxin toxicity: bradycardia heart block nausea. Reduce digoxin dose by 30-50%.,clinical_reference
+digoxin,clarithromycin,high,Clarithromycin inhibits P-gp increasing digoxin concentrations and risk of toxicity. Monitor digoxin levels closely.,clinical_reference
+methotrexate,aspirin,high,NSAIDs reduce renal clearance of methotrexate causing toxic accumulation. Can cause severe bone marrow suppression and mucositis. Avoid concurrent use especially with high-dose methotrexate.,clinical_reference
+methotrexate,ibuprofen,high,Ibuprofen reduces methotrexate renal excretion potentially causing life-threatening toxicity including bone marrow suppression. Avoid concurrent use.,clinical_reference
+lithium,ibuprofen,high,NSAIDs reduce renal lithium clearance increasing lithium levels and risk of toxicity (tremor confusion arrhythmias). Monitor lithium levels closely.,clinical_reference
+lithium,naproxen,high,Naproxen reduces renal lithium clearance. Lithium toxicity risk increases significantly. Monitor serum lithium levels.,clinical_reference
+colchicine,clarithromycin,contraindicated,Clarithromycin inhibits P-gp and CYP3A4 causing potentially fatal colchicine toxicity including multi-organ failure. Contraindicated especially in renal impairment.,clinical_reference
+cyclosporine,clarithromycin,high,Clarithromycin inhibits CYP3A4 markedly increasing cyclosporine levels and nephrotoxicity risk. Monitor cyclosporine levels and renal function.,clinical_reference
+tacrolimus,clarithromycin,high,Clarithromycin strongly inhibits CYP3A4 increasing tacrolimus levels several-fold. Can cause nephrotoxicity and immunosuppression complications. Monitor levels.,clinical_reference
+sildenafil,nitrates,contraindicated,Concurrent use of PDE5 inhibitors with nitrates causes severe potentially fatal hypotension. Absolutely contraindicated.,clinical_reference
+tadalafil,nitrates,contraindicated,PDE5 inhibitors combined with nitrates cause severe hypotension. Contraindicated combination.,clinical_reference
+amlodipine,simvastatin,moderate,Amlodipine inhibits CYP3A4 increasing simvastatin exposure and myopathy risk. Limit simvastatin dose to 20mg/day with amlodipine 10mg.,clinical_reference
+ciprofloxacin,warfarin,high,Ciprofloxacin inhibits CYP1A2 and alters gut flora reducing vitamin K synthesis thereby increasing warfarin effect. Monitor INR during and after ciprofloxacin.,clinical_reference
+ciprofloxacin,theophylline,high,Ciprofloxacin inhibits theophylline metabolism via CYP1A2 causing elevated theophylline levels and toxicity risk (seizures cardiac arrhythmias).,clinical_reference
+valproate,aspirin,moderate,High-dose aspirin displaces valproate from protein binding and inhibits its metabolism increasing free valproate levels and toxicity risk.,clinical_reference
+carbamazepine,valproate,moderate,Carbamazepine induces valproate metabolism reducing its levels. Valproate also affects carbamazepine metabolite levels. Monitor levels of both drugs.,clinical_reference
+phenytoin,valproate,moderate,Valproate inhibits phenytoin metabolism and displaces it from protein binding causing variable and unpredictable phenytoin levels. Monitor closely.,clinical_reference
+metformin,contrast_dye,high,Iodinated contrast media can cause acute kidney injury in patients taking metformin leading to lactic acidosis. Hold metformin 48 hours before and after contrast.,clinical_reference
+azathioprine,allopurinol,contraindicated,Allopurinol inhibits xanthine oxidase the enzyme responsible for azathioprine metabolism causing severe azathioprine toxicity including bone marrow suppression. Contraindicated or require 75% dose reduction.,clinical_reference
+mercaptopurine,allopurinol,contraindicated,Allopurinol blocks mercaptopurine metabolism leading to life-threatening bone marrow suppression and hepatotoxicity. Contraindicated or reduce mercaptopurine dose by 75%.,clinical_reference
+clopidogrel,aspirin,moderate,Dual antiplatelet therapy increases bleeding risk. While used intentionally in ACS treatment the combination requires monitoring for GI and other bleeding.,clinical_reference
+apixaban,aspirin,moderate,Combining direct oral anticoagulants with antiplatelet agents increases major bleeding risk. Generally avoid unless benefit clearly outweighs risk.,clinical_reference
+rivaroxaban,aspirin,moderate,Anticoagulant combined with antiplatelet agent increases bleeding risk. Monitor for signs of bleeding.,clinical_reference
+oxycodone,alprazolam,high,CNS depressant combination (opioid + benzodiazepine) increases risk of profound sedation respiratory depression coma and death. Avoid concurrent use.,clinical_reference
+morphine,diazepam,high,Opioids combined with benzodiazepines cause additive CNS and respiratory depression. Can be fatal. Avoid concurrent use or use lowest doses with close monitoring.,clinical_reference
+codeine,alprazolam,high,Opioid plus benzodiazepine combination is associated with increased risk of respiratory depression and overdose death.,clinical_reference
+hydroxychloroquine,azithromycin,high,Both drugs prolong QT interval. Concurrent use significantly increases risk of fatal cardiac arrhythmias including torsades de pointes.,clinical_reference
+clarithromycin,sotalol,contraindicated,Clarithromycin prolongs QT interval and combined with sotalol (which also prolongs QT) greatly increases risk of torsades de pointes.,clinical_reference
+amiodarone,sotalol,contraindicated,Both amiodarone and sotalol prolong cardiac repolarization. Combination greatly increases risk of ventricular arrhythmias and torsades de pointes.,clinical_reference

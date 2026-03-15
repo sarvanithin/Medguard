@@ -53,11 +53,19 @@ class HallucinationConfig(BaseModel):
     check_confident_claims: bool = True
 
 
+class FactCheckConfig(BaseModel):
+    enabled: bool = False  # opt-in: requires network calls to PubMed
+    confidence_threshold: float = 0.4
+    max_claims_per_response: int = 5
+    ncbi_api_key_env: str = "NCBI_API_KEY"
+
+
 class GuardrailsConfig(BaseModel):
     phi_detection: PHIConfig = Field(default_factory=PHIConfig)
     drug_safety: DrugSafetyConfig = Field(default_factory=DrugSafetyConfig)
     scope_enforcement: ScopeConfig = Field(default_factory=ScopeConfig)
     hallucination_detection: HallucinationConfig = Field(default_factory=HallucinationConfig)
+    fact_checking: FactCheckConfig = Field(default_factory=FactCheckConfig)
 
 
 class LLMConfig(BaseModel):

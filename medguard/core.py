@@ -36,6 +36,7 @@ from medguard.guardrails.scope import ScopeEnforcer
 
 if TYPE_CHECKING:
     from medguard.guardrails.drug_safety import DrugSafetyChecker
+    from medguard.guardrails.fact_check import FactVerifier
     from medguard.guardrails.hallucination import HallucinationDetector
     from medguard.guardrails.protocols import LLMCallerProtocol
 
@@ -66,6 +67,7 @@ class MedGuard:
         self.scope_enforcer: ScopeEnforcer | None = None
         self.drug_checker: DrugSafetyChecker | None = None
         self.hallucination_detector: HallucinationDetector | None = None
+        self.fact_verifier: FactVerifier | None = None
         self._llm_caller: LLMCallerProtocol | None = None
 
         self._build_components()
@@ -197,6 +199,27 @@ class MedGuard:
             except ImportError:
                 log.warning("hallucination_deps_missing")
 
+        # PubMed fact verifier (opt-in)
+        if cfg.guardrails.fact_checking.enabled:
+            try:
+                import httpx
+
+                from medguard.guardrails.fact_check import FactVerifier
+                from medguard.knowledge.pubmed import PubMedClient
+
+                if not hasattr(self, "_http_client"):
+                    self._http_client = httpx.AsyncClient(timeout=10.0)
+                pubmed = PubMedClient(
+                    self._http_client,
+                    max_results=cfg.guardrails.fact_checking.max_claims_per_response,
+                )
+                self.fact_verifier = FactVerifier(
+                    pubmed,
+                    confidence_threshold=cfg.guardrails.fact_checking.confidence_threshold,
+                )
+            except Exception as exc:
+                log.warning("fact_verifier_init_failed", error=str(exc))
+
         # LLM caller
         try:
             self._llm_caller = _build_llm_caller(cfg)
@@ -210,6 +233,7 @@ class MedGuard:
             scope_enforcer=self.scope_enforcer,
             drug_checker=self.drug_checker,
             hallucination_detector=self.hallucination_detector,
+            fact_verifier=self.fact_verifier,
             llm_caller=self._llm_caller,
         )
 

@@ -86,6 +86,7 @@ class GuardrailPipeline:
         scope_enforcer=None,
         drug_checker=None,
         hallucination_detector=None,
+        fact_verifier=None,
         llm_caller: LLMCallerProtocol | None = None,
     ) -> None:
         self.config = config
@@ -93,6 +94,7 @@ class GuardrailPipeline:
         self._scope = scope_enforcer
         self._drug = drug_checker
         self._hallucination = hallucination_detector
+        self._fact_verifier = fact_verifier
         self._llm = llm_caller
 
     async def run(self, user_input: str) -> PipelineContext:
@@ -265,31 +267,53 @@ class GuardrailPipeline:
             ctx.errors.append(f"Drug safety check error: {exc}")
 
     async def _run_post_llm_stage(self, ctx: PipelineContext) -> None:
-        """Stage 4: Hallucination detection on LLM output."""
-        if (
-            self._hallucination is None
-            or not self.config.guardrails.hallucination_detection.enabled
-            or ctx.llm_response is None
-        ):
+        """Stage 4: Hallucination detection + PubMed fact verification on LLM output."""
+        if ctx.llm_response is None:
             return
-        try:
-            hall_result = await self._hallucination.check(ctx.llm_response)
-            ctx.hallucination_result = hall_result
-            if hall_result.flags:
-                flag_types = list({f.type.value for f in hall_result.flags})
-                ctx.warnings.append(
-                    f"Medical accuracy notice: {', '.join(flag_types)} detected in response."
-                )
-                # Use annotated text (with inline [WARNING: ...] markers)
-                ctx.processed_output = hall_result.annotated_text
-                if hall_result.blocked:
-                    ctx.blocked = True
-                    ctx.block_reason = (
-                        "Response contains potentially inaccurate medical information "
-                        f"(hallucination score: {hall_result.hallucination_score:.2f})."
+
+        # 4a. Hallucination detection
+        if self._hallucination is not None and self.config.guardrails.hallucination_detection.enabled:
+            try:
+                hall_result = await self._hallucination.check(ctx.llm_response)
+                ctx.hallucination_result = hall_result
+                if hall_result.flags:
+                    flag_types = list({f.type.value for f in hall_result.flags})
+                    ctx.warnings.append(
+                        f"Medical accuracy notice: {', '.join(flag_types)} detected in response."
                     )
-        except Exception as exc:
-            log.warning(
-                "hallucination_check_failed", error=str(exc), request_id=ctx.request_id
-            )
-            ctx.errors.append(f"Hallucination check error: {exc}")
+                    ctx.processed_output = hall_result.annotated_text
+                    if hall_result.blocked:
+                        ctx.blocked = True
+                        ctx.block_reason = (
+                            "Response contains potentially inaccurate medical information "
+                            f"(hallucination score: {hall_result.hallucination_score:.2f})."
+                        )
+            except Exception as exc:
+                log.warning("hallucination_check_failed", error=str(exc), request_id=ctx.request_id)
+                ctx.errors.append(f"Hallucination check error: {exc}")
+
+        # 4b. PubMed fact verification (opt-in)
+        if (
+            self._fact_verifier is not None
+            and self.config.guardrails.fact_checking.enabled
+            and not ctx.blocked
+        ):
+            try:
+                fact_result = await self._fact_verifier.verify(ctx.llm_response)
+                if fact_result.flagged and fact_result.annotation:
+                    current = ctx.processed_output or ctx.llm_response
+                    ctx.processed_output = current + "\n\n" + fact_result.annotation
+                    ctx.warnings.append(
+                        f"Fact-check: {fact_result.claims_checked} claim(s) checked, "
+                        f"{len(fact_result.unverified_claims)} unverified against PubMed."
+                    )
+                    log.info(
+                        "fact_check_complete",
+                        claims=fact_result.claims_checked,
+                        verified=len(fact_result.verified_claims),
+                        unverified=len(fact_result.unverified_claims),
+                        request_id=ctx.request_id,
+                    )
+            except Exception as exc:
+                log.warning("fact_check_failed", error=str(exc), request_id=ctx.request_id)
+                ctx.errors.append(f"Fact check error: {exc}")

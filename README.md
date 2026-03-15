@@ -1,4 +1,4 @@
-# medguard
+# Medguard
 
 Healthcare-specific LLM guardrails middleware for clinical safety.
 

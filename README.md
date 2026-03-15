@@ -92,6 +92,11 @@ MEDGUARD_GUARDRAILS__DRUG_SAFETY__SEVERITY_THRESHOLD=high
 MEDGUARD_GUARDRAILS__SCOPE_ENFORCEMENT__ACTION=block    # warn | block
 MEDGUARD_LLM__PROVIDER=openai
 MEDGUARD_LLM__MODEL=gpt-4o
+
+# Ollama (local, no API key needed)
+MEDGUARD_LLM__PROVIDER=ollama
+MEDGUARD_LLM__MODEL=llama3.2
+MEDGUARD_LLM__BASE_URL=http://localhost:11434/v1
 ```
 
 ## Configuration
@@ -113,6 +118,42 @@ Config is loaded from `~/.medguard/config.json` (auto-created on first run).
   },
   "api": { "host": "0.0.0.0", "port": 8080 }
 }
+```
+
+LLM provider options:
+
+| Provider | Config |
+|----------|--------|
+| Anthropic (default) | `"provider": "anthropic", "model": "claude-haiku-4-5-20251001"` |
+| OpenAI | `"provider": "openai", "model": "gpt-4o"` |
+| **Ollama (local)** | `"provider": "ollama", "model": "llama3.2"` |
+| Azure / custom | `"provider": "openai", "base_url": "https://..."` |
+
+### Ollama (fully local, no API key)
+
+```bash
+# 1. Install and start Ollama
+ollama pull llama3.2         # or mistral, phi3, gemma2, etc.
+ollama serve                 # runs on localhost:11434
+
+# 2. Run medguard with Ollama
+MEDGUARD_LLM__PROVIDER=ollama \
+MEDGUARD_LLM__MODEL=llama3.2 \
+medguard serve
+```
+
+Or in Python:
+
+```python
+from medguard import MedGuard
+from medguard.config import MedGuardConfig, LLMConfig
+
+mg = MedGuard(config=MedGuardConfig(
+    llm=LLMConfig(provider="ollama", model="llama3.2")
+))
+
+import asyncio
+response = asyncio.run(mg.achat("What are the side effects of metformin?"))
 ```
 
 PHI engine options:

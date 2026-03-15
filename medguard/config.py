@@ -61,7 +61,7 @@ class GuardrailsConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    provider: Literal["anthropic", "openai", "custom"] = "anthropic"
+    provider: Literal["anthropic", "openai", "ollama", "custom"] = "anthropic"
     model: str = "claude-haiku-4-5-20251001"
     api_key_env: str = "ANTHROPIC_API_KEY"
     base_url: str | None = None

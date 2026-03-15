@@ -222,6 +222,19 @@ def _build_llm_caller(config: MedGuardConfig) -> LLMCallerProtocol | None:
     elif provider == "openai":
         from medguard.integrations.openai import OpenAICaller
         return OpenAICaller(config.llm)
+    elif provider == "ollama":
+        from medguard.config import LLMConfig
+        from medguard.integrations.openai import OpenAICaller
+        ollama_config = LLMConfig(
+            provider="ollama",
+            model=config.llm.model,
+            base_url=config.llm.base_url or "http://localhost:11434/v1",
+            api_key_env=config.llm.api_key_env,
+            timeout_seconds=config.llm.timeout_seconds,
+            max_tokens=config.llm.max_tokens,
+            system_prompt=config.llm.system_prompt,
+        )
+        return OpenAICaller(ollama_config)
     return None
 
 

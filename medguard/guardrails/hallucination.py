@@ -140,13 +140,13 @@ class HallucinationDetector:
         self._snomed = snomed
 
     async def check(self, text: str) -> HallucinationResult:
-        tasks = []
+        tasks: list = []
         if self.config.check_drug_names:
             tasks.append(self._check_drug_names(text))
         if self.config.check_dosages:
             tasks.append(self._check_dosages(text))
         if self.config.check_confident_claims:
-            tasks.append(asyncio.coroutine(lambda: self._check_confident_claims(text))())
+            tasks.append(self._check_confident_claims_async(text))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -167,6 +167,10 @@ class HallucinationDetector:
             blocked=blocked,
             annotated_text=annotated,
         )
+
+    async def _check_confident_claims_async(self, text: str) -> list[HallucinationFlag]:
+        """Async wrapper around the sync confident-claims checker."""
+        return self._check_confident_claims(text)
 
     async def _check_drug_names(self, text: str) -> list[HallucinationFlag]:
         """Flag drug-like names that RxNorm doesn't recognize."""
@@ -294,50 +298,3 @@ def _annotate_text(text: str, flags: list[HallucinationFlag]) -> str:
         result = result[: flag.end] + annotation + result[flag.end :]
     return result
 
-
-# Compatibility shim for Python 3.10 (asyncio.coroutine was removed in 3.11)
-import sys
-if sys.version_info >= (3, 11):
-    def _wrap_sync(fn):
-        async def _inner(*args, **kwargs):
-            return fn(*args, **kwargs)
-        return _inner
-else:
-    def _wrap_sync(fn):
-        async def _inner(*args, **kwargs):
-            return fn(*args, **kwargs)
-        return _inner
-
-# Patch the check method to use _wrap_sync for _check_confident_claims
-_orig_check = HallucinationDetector.check
-
-async def _patched_check(self, text: str) -> HallucinationResult:
-    tasks = []
-    if self.config.check_drug_names:
-        tasks.append(self._check_drug_names(text))
-    if self.config.check_dosages:
-        tasks.append(self._check_dosages(text))
-    if self.config.check_confident_claims:
-        tasks.append(_wrap_sync(self._check_confident_claims)(text))
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    flags: list[HallucinationFlag] = []
-    for result in results:
-        if isinstance(result, Exception):
-            log.debug("hallucination_subcheck_failed", error=str(result))
-        elif isinstance(result, list):
-            flags.extend(result)
-
-    score = _compute_hallucination_score(flags)
-    blocked = score >= self.config.confidence_threshold and bool(flags)
-    annotated = _annotate_text(text, flags)
-
-    return HallucinationResult(
-        flags=flags,
-        hallucination_score=score,
-        blocked=blocked,
-        annotated_text=annotated,
-    )
-
-HallucinationDetector.check = _patched_check

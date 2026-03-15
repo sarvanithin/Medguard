@@ -94,7 +94,7 @@ class MedGuardConfig(BaseSettings):
     )
 
     @classmethod
-    def load(cls, path: Path | None = None) -> "MedGuardConfig":
+    def load(cls, path: Path | None = None) -> MedGuardConfig:
         """Load config from JSON file, then apply env var overrides."""
         config_path = path or _default_config_path()
         if config_path.exists():

@@ -12,11 +12,11 @@ never blocks the entire request. Failures are logged and added to warnings.
 """
 from __future__ import annotations
 
-import asyncio
 import time
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from medguard.guardrails.drug_safety import DrugSafetyResult
     from medguard.guardrails.hallucination import HallucinationResult
     from medguard.guardrails.phi import PHIResult
-    from medguard.guardrails.scope import ScopeResult
     from medguard.guardrails.protocols import LLMCallerProtocol
+    from medguard.guardrails.scope import ScopeResult
 
 log = structlog.get_logger(__name__)
 
@@ -42,10 +42,10 @@ class PipelineContext:
     processed_output: str | None = None  # after hallucination annotation
 
     # Stage results
-    phi_result: "PHIResult | None" = None
-    scope_result: "ScopeResult | None" = None
-    drug_result: "DrugSafetyResult | None" = None
-    hallucination_result: "HallucinationResult | None" = None
+    phi_result: PHIResult | None = None
+    scope_result: ScopeResult | None = None
+    drug_result: DrugSafetyResult | None = None
+    hallucination_result: HallucinationResult | None = None
 
     # Control flow
     blocked: bool = False
@@ -81,12 +81,12 @@ class GuardrailPipeline:
 
     def __init__(
         self,
-        config: "MedGuardConfig",
+        config: MedGuardConfig,
         phi_detector=None,
         scope_enforcer=None,
         drug_checker=None,
         hallucination_detector=None,
-        llm_caller: "LLMCallerProtocol | None" = None,
+        llm_caller: LLMCallerProtocol | None = None,
     ) -> None:
         self.config = config
         self._phi = phi_detector
@@ -136,7 +136,7 @@ class GuardrailPipeline:
 
     async def run_streaming(
         self, user_input: str
-    ) -> tuple[PipelineContext, "AsyncIterator[str] | None"]:
+    ) -> tuple[PipelineContext, AsyncIterator[str] | None]:
         """
         Run input/pre-LLM checks synchronously, then return a streaming
         iterator for the LLM response.

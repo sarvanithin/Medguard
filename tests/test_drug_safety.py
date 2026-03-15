@@ -4,19 +4,18 @@ Drug safety tests.
 Unit tests use mocked httpx (respx) — no real API calls.
 Integration tests (marked) hit real OpenFDA API and are skipped in CI.
 """
-import json
+import httpx
 import pytest
 import respx
-import httpx
 
 from medguard.config import DrugSafetyConfig
-from medguard.knowledge.openfda import OpenFDAClient, InteractionSeverity
-from medguard.knowledge.rxnorm import RxNormClient
 from medguard.guardrails.drug_safety import (
+    DrugMentionExtractor,
     DrugSafetyChecker,
     StaticInteractionTable,
-    DrugMentionExtractor,
 )
+from medguard.knowledge.openfda import InteractionSeverity, OpenFDAClient
+from medguard.knowledge.rxnorm import RxNormClient
 
 
 @pytest.fixture
@@ -208,8 +207,6 @@ class TestDrugSafetyChecker:
     async def test_warfarin_aspirin_blocked(self, drug_config, http_client):
         """Warfarin + aspirin should be blocked at moderate threshold."""
         # Mock RxNorm — warfarin
-        rxnorm_calls = 0
-
         def rxnorm_side_effect(request):
             name = request.url.params.get("name", "").lower()
             if "warfarin" in name:

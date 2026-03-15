@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class PHIEngineProtocol(Protocol):
     """Protocol for PHI detection engines."""
 
-    def analyze(self, text: str, entities: list[str]) -> list["PHIMatch"]:
+    def analyze(self, text: str, entities: list[str]) -> list[PHIMatch]:
         """
         Detect PHI in text.
 
@@ -58,7 +58,7 @@ class InteractionSourceProtocol(Protocol):
 
     async def get_drug_interactions(
         self, drug_a: str, drug_b: str
-    ) -> "DrugInteraction | None":
+    ) -> DrugInteraction | None:
         """
         Look up interaction between two drugs.
 

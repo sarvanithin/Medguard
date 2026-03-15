@@ -8,7 +8,7 @@ Supports both full response and streaming.
 from __future__ import annotations
 
 import os
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import structlog
 
@@ -64,7 +64,6 @@ class AnthropicCaller:
                 yield text
 
     async def _call_with_httpx(self, prompt: str) -> str:
-        import json
         import httpx
 
         payload = {
@@ -89,6 +88,7 @@ class AnthropicCaller:
 
     async def _stream_with_httpx(self, prompt: str) -> AsyncIterator[str]:
         import json
+
         import httpx
 
         payload = {

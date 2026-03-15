@@ -12,7 +12,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import sys
 
 
 def main() -> None:
@@ -55,6 +54,7 @@ def _add_serve_args(p: argparse.ArgumentParser) -> None:
 
 def _run_server(args) -> None:
     import uvicorn
+
     from medguard.config import get_config
     from medguard.core import MedGuard
 
@@ -66,7 +66,7 @@ def _run_server(args) -> None:
 
     from rich.console import Console
     console = Console()
-    console.print(f"\n[bold green]medguard[/bold green] v0.1.0")
+    console.print("\n[bold green]medguard[/bold green] v0.1.0")
     console.print(f"  API server starting on [cyan]http://{host}:{port}[/cyan]")
     console.print(f"  Docs: [cyan]http://{host}:{port}/docs[/cyan]")
     console.print(f"  Health: [cyan]http://{host}:{port}/v1/health[/cyan]\n")
@@ -85,8 +85,10 @@ def _run_server(args) -> None:
 
 def _run_check(text: str) -> None:
     import asyncio
+
     from rich.console import Console
     from rich.table import Table
+
     from medguard.core import MedGuard
 
     console = Console()
@@ -121,7 +123,7 @@ def _run_check(text: str) -> None:
     if ctx.blocked:
         console.print(f"\n[bold red]BLOCKED:[/bold red] {ctx.block_reason}")
     elif ctx.warnings:
-        console.print(f"\n[bold yellow]Warnings:[/bold yellow]")
+        console.print("\n[bold yellow]Warnings:[/bold yellow]")
         for w in ctx.warnings:
             console.print(f"  • {w}")
     else:
@@ -131,6 +133,7 @@ def _run_check(text: str) -> None:
 def _show_config() -> None:
     from rich.console import Console
     from rich.syntax import Syntax
+
     from medguard.config import get_config
 
     config = get_config()

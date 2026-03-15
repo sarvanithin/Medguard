@@ -15,8 +15,7 @@ Tier 3 (optional, pip install medguard[aws]): AWSComprehendPHIEngine
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from typing import Literal
+from dataclasses import dataclass
 
 from medguard.config import PHIConfig
 

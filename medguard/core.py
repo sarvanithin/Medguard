@@ -23,8 +23,9 @@ from __future__ import annotations
 
 import asyncio
 import importlib.metadata
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -63,9 +64,9 @@ class MedGuard:
 
         self.phi_detector: PHIDetector | None = None
         self.scope_enforcer: ScopeEnforcer | None = None
-        self.drug_checker: "DrugSafetyChecker | None" = None
-        self.hallucination_detector: "HallucinationDetector | None" = None
-        self._llm_caller: "LLMCallerProtocol | None" = None
+        self.drug_checker: DrugSafetyChecker | None = None
+        self.hallucination_detector: HallucinationDetector | None = None
+        self._llm_caller: LLMCallerProtocol | None = None
 
         self._build_components()
         self.pipeline = self._build_pipeline()
@@ -142,7 +143,6 @@ class MedGuard:
             if phi_engine in registered_engines:
                 engine_cls = registered_engines[phi_engine]
                 try:
-                    from medguard.guardrails.phi import PHIConfig
                     self.phi_detector = PHIDetector.__new__(PHIDetector)
                     self.phi_detector.config = cfg.guardrails.phi_detection
                     self.phi_detector._engine = engine_cls()
@@ -163,10 +163,11 @@ class MedGuard:
         # Drug safety checker (requires async setup, done lazily)
         if cfg.guardrails.drug_safety.enabled:
             try:
+                import httpx
+
                 from medguard.guardrails.drug_safety import DrugSafetyChecker
                 from medguard.knowledge.openfda import OpenFDAClient
                 from medguard.knowledge.rxnorm import RxNormClient
-                import httpx
 
                 http_client = httpx.AsyncClient(timeout=cfg.guardrails.drug_safety.api_timeout_seconds)
                 rxnorm = RxNormClient(cfg.guardrails.drug_safety, http_client)
@@ -180,10 +181,11 @@ class MedGuard:
         # Hallucination detector
         if cfg.guardrails.hallucination_detection.enabled:
             try:
+                import httpx
+
                 from medguard.guardrails.hallucination import HallucinationDetector
                 from medguard.knowledge.rxnorm import RxNormClient
                 from medguard.knowledge.snomed import SNOMEDClient
-                import httpx
 
                 if not hasattr(self, '_http_client'):
                     self._http_client = httpx.AsyncClient(timeout=5.0)
@@ -212,7 +214,7 @@ class MedGuard:
         )
 
 
-def _build_llm_caller(config: MedGuardConfig) -> "LLMCallerProtocol | None":
+def _build_llm_caller(config: MedGuardConfig) -> LLMCallerProtocol | None:
     provider = config.llm.provider
     if provider == "anthropic":
         from medguard.integrations.anthropic import AnthropicCaller

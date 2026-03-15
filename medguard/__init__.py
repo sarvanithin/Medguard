@@ -18,8 +18,8 @@ Quick start:
     # Start the FastAPI server
     app = mg.create_app()
 """
-from medguard.core import MedGuard
 from medguard.config import MedGuardConfig, get_config
+from medguard.core import MedGuard
 from medguard.guardrails.pipeline import PipelineContext
 
 __version__ = "0.1.0"

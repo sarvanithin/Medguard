@@ -97,7 +97,7 @@ class DrugMentionExtractor:
     """
 
     async def extract(
-        self, text: str, rxnorm_client: "RxNormClient"
+        self, text: str, rxnorm_client: RxNormClient
     ) -> list[DrugMention]:
         found: dict[str, DrugMention] = {}
         text_lower = text.lower()
@@ -183,8 +183,8 @@ class DrugSafetyChecker:
     def __init__(
         self,
         config: DrugSafetyConfig,
-        rxnorm: "RxNormClient",
-        openfda: "OpenFDAClient",
+        rxnorm: RxNormClient,
+        openfda: OpenFDAClient,
     ) -> None:
         self.config = config
         self._rxnorm = rxnorm

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import asyncio
 import time
-import uuid
+from collections.abc import AsyncIterator
 from functools import lru_cache
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 import httpx
 import structlog
@@ -48,15 +48,15 @@ _start_time = time.monotonic()
 # Dependency injection
 # ---------------------------------------------------------------------------
 
-_medguard_instance: "MedGuard | None" = None
+_medguard_instance: MedGuard | None = None
 
 
-def set_medguard_instance(instance: "MedGuard") -> None:
+def set_medguard_instance(instance: MedGuard) -> None:
     global _medguard_instance
     _medguard_instance = instance
 
 
-def get_medguard() -> "MedGuard":
+def get_medguard() -> MedGuard:
     if _medguard_instance is None:
         from medguard.core import MedGuard
         set_medguard_instance(MedGuard())
@@ -71,7 +71,7 @@ def get_medguard() -> "MedGuard":
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(
     request: ChatRequest,
-    mg: "MedGuard" = Depends(get_medguard),
+    mg: MedGuard = Depends(get_medguard),
 ) -> ChatResponse | StreamingResponse:
     """
     Main guardrailed chat endpoint.
@@ -122,7 +122,7 @@ async def chat_endpoint(
 @router.post("/check/phi", response_model=PHICheckResponse)
 async def check_phi(
     request: PHICheckRequest,
-    mg: "MedGuard" = Depends(get_medguard),
+    mg: MedGuard = Depends(get_medguard),
 ) -> PHICheckResponse:
     """Standalone PHI detection endpoint."""
     if mg.phi_detector is None:
@@ -149,7 +149,7 @@ async def check_phi(
 @router.post("/check/drug-interactions", response_model=DrugInteractionResponse)
 async def check_drug_interactions(
     request: DrugInteractionRequest,
-    mg: "MedGuard" = Depends(get_medguard),
+    mg: MedGuard = Depends(get_medguard),
 ) -> DrugInteractionResponse:
     """Standalone drug interaction and contraindication check."""
     if mg.drug_checker is None:
@@ -195,7 +195,7 @@ async def check_drug_interactions(
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
-    mg: "MedGuard" = Depends(get_medguard),
+    mg: MedGuard = Depends(get_medguard),
 ) -> HealthResponse:
     """
     Health check endpoint. Pings external APIs and checks component availability.

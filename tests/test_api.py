@@ -3,15 +3,14 @@ FastAPI route tests.
 
 Uses httpx.AsyncClient with the app directly — no real network calls for guardrails.
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from fastapi.testclient import TestClient
 
 from medguard.api.app import create_app
-from medguard.api.routes import set_medguard_instance
+from medguard.guardrails.phi import PHIMatch, PHIResult
 from medguard.guardrails.pipeline import PipelineContext
-from medguard.guardrails.phi import PHIResult, PHIMatch
-from medguard.guardrails.scope import ScopeResult, ScopeCategory
 
 
 def _make_mock_medguard(blocked=False, phi_detected=False, warnings=None):
@@ -57,7 +56,6 @@ def _make_mock_medguard(blocked=False, phi_detected=False, warnings=None):
 
     # PHI detector
     if phi_detected:
-        phi_result = mg.phi_result if hasattr(mg, "phi_result") else ctx.phi_result
         mg.phi_detector = MagicMock()
         mg.phi_detector._engine = MagicMock()
         mg.phi_detector._engine.__class__.__name__ = "RegexPHIEngine"
@@ -246,8 +244,9 @@ class TestAPIModels:
         assert req.mode == "detect"
 
     def test_drug_interaction_requires_min_two_drugs(self):
-        from medguard.api.models import DrugInteractionRequest
         import pytest
+
+        from medguard.api.models import DrugInteractionRequest
         with pytest.raises(Exception):
             DrugInteractionRequest(drugs=["warfarin"])  # min_length=2
 

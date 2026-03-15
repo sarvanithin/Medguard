@@ -23,7 +23,6 @@ from typing import Literal
 import httpx
 import structlog
 from pydantic import BaseModel
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 from medguard.config import DrugSafetyConfig
 

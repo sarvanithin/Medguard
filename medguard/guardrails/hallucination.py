@@ -132,8 +132,8 @@ class HallucinationDetector:
     def __init__(
         self,
         config: HallucinationConfig,
-        rxnorm: "RxNormClient",
-        snomed: "SNOMEDClient",
+        rxnorm: RxNormClient,
+        snomed: SNOMEDClient,
     ) -> None:
         self.config = config
         self._rxnorm = rxnorm

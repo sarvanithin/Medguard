@@ -80,7 +80,7 @@ instructions:
 '''
 
 
-def build_nemo_actions(mg: "MedGuard") -> dict:
+def build_nemo_actions(mg: MedGuard) -> dict:
     """
     Build a dict of NeMo-compatible async action handlers from a MedGuard instance.
 

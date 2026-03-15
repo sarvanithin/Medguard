@@ -9,7 +9,9 @@ description = "Healthcare-specific LLM guardrails middleware for clinical safety
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-keywords = ["healthcare", "llm", "guardrails", "clinical", "safety", "hipaa", "phi"]
+authors = [{ name = "Nithin Sarva", email = "sarvanithin@gmail.com" }]
+keywords = ["healthcare", "llm", "guardrails", "clinical", "safety", "hipaa", "phi", "drug-interactions", "hallucination-detection"]
+urls = { Homepage = "https://github.com/sarvanithin/Medguard", Repository = "https://github.com/sarvanithin/Medguard", "Bug Tracker" = "https://github.com/sarvanithin/Medguard/issues" }
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Healthcare Industry",

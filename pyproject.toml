@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "medguard"
+name = "medguard-llm"
 version = "0.1.0"
 description = "Healthcare-specific LLM guardrails middleware for clinical safety"
 readme = "README.md"

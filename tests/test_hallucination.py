@@ -3,19 +3,18 @@ Hallucination detection tests.
 
 Uses mocked RxNorm and SNOMED to avoid network dependency.
 """
+import httpx
 import pytest
 import respx
-import httpx
 
-from medguard.config import HallucinationConfig, DrugSafetyConfig
+from medguard.config import DrugSafetyConfig, HallucinationConfig
 from medguard.guardrails.hallucination import (
+    MAX_DOSES,
     HallucinationDetector,
     HallucinationType,
-    MAX_DOSES,
 )
 from medguard.knowledge.rxnorm import RxNormClient
 from medguard.knowledge.snomed import SNOMEDClient
-from tests.fixtures.medical_cases import HALLUCINATION_CASES
 
 
 @pytest.fixture
@@ -167,7 +166,7 @@ class TestHallucinationDetector:
         assert result.hallucination_score > 0
 
     def test_annotated_text_contains_warnings(self):
-        from medguard.guardrails.hallucination import _annotate_text, HallucinationFlag
+        from medguard.guardrails.hallucination import HallucinationFlag, _annotate_text
         flags = [
             HallucinationFlag(
                 type=HallucinationType.CONFIDENT_UNSUPPORTED_CLAIM,

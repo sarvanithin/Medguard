@@ -4,14 +4,13 @@ End-to-end pipeline tests.
 Uses mocked LLM and mocked external APIs.
 Tests blocking, warning, and streaming behaviors.
 """
-import pytest
-import respx
-import httpx
 from unittest.mock import AsyncMock, MagicMock
 
-from medguard.config import MedGuardConfig, GuardrailsConfig, PHIConfig, ScopeConfig
-from medguard.guardrails.pipeline import GuardrailPipeline, PipelineContext
+import pytest
+
+from medguard.config import MedGuardConfig, PHIConfig, ScopeConfig
 from medguard.guardrails.phi import PHIDetector
+from medguard.guardrails.pipeline import GuardrailPipeline
 from medguard.guardrails.scope import ScopeEnforcer
 
 

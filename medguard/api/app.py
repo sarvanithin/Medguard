@@ -4,10 +4,13 @@ FastAPI application factory for medguard.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from medguard.api.routes import router
 
@@ -62,13 +65,13 @@ def create_app(medguard_instance=None) -> FastAPI:
         from medguard.api.routes import set_medguard_instance
         set_medguard_instance(medguard_instance)
 
+    # Serve the frontend UI at /ui
+    static_dir = Path(__file__).parent.parent / "static"
+    if static_dir.exists():
+        app.mount("/ui", StaticFiles(directory=static_dir, html=True), name="ui")
+
     @app.get("/", include_in_schema=False)
     async def root():
-        return {
-            "service": "medguard",
-            "version": "0.1.0",
-            "docs": "/docs",
-            "health": "/v1/health",
-        }
+        return RedirectResponse(url="/ui")
 
     return app

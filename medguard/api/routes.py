@@ -107,7 +107,7 @@ async def chat_endpoint(
     ctx = await mg.pipeline.run(user_text)
 
     guardrails = _build_guardrail_annotations(ctx)
-    return ChatResponse(
+    response = ChatResponse(
         id=ctx.request_id,
         content=ctx.block_reason if ctx.blocked else (ctx.final_output() or ""),
         guardrails=guardrails,
@@ -117,6 +117,11 @@ async def chat_endpoint(
         warnings=ctx.warnings,
         processing_time_ms=round(ctx.processing_time_ms, 1),
     )
+    # Attach full trace as extra field for the UI
+    response_dict = response.model_dump()
+    response_dict["trace"] = _build_trace(ctx)
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content=response_dict)
 
 
 @router.post("/check/phi", response_model=PHICheckResponse)
@@ -317,7 +322,87 @@ def _sse_done(ctx) -> str:
         "block_reason": ctx.block_reason,
         "guardrails": [a.model_dump() for a in annotations],
         "warnings": ctx.warnings,
+        "trace": _build_trace(ctx),
     })
+
+
+def _build_trace(ctx) -> dict:
+    """Build a full pipeline trace for the UI inspector."""
+    trace = {
+        "stages": [],
+        "original_input": ctx.original_input,
+        "processed_input": ctx.processed_input,
+        "llm_response": ctx.llm_response,
+        "final_output": ctx.final_output(),
+        "errors": ctx.errors,
+    }
+
+    # Stage 1a: PHI
+    if ctx.phi_result is not None:
+        phi = ctx.phi_result
+        trace["stages"].append({
+            "stage": "1a",
+            "name": "PHI Detection",
+            "triggered": phi.phi_detected,
+            "engine": phi.engine_used,
+            "entities": [
+                {"type": m.entity_type, "text": m.text, "confidence": round(m.confidence, 2)}
+                for m in phi.matches
+            ],
+            "redacted_input": phi.processed if phi.phi_detected else None,
+        })
+
+    # Stage 1b: Scope
+    if ctx.scope_result is not None:
+        s = ctx.scope_result
+        trace["stages"].append({
+            "stage": "1b",
+            "name": "Scope Enforcement",
+            "triggered": not s.in_scope,
+            "category": s.category.value,
+            "action": s.action_taken,
+            "reason": s.reason,
+        })
+
+    # Stage 2: Drug Safety
+    if ctx.drug_result is not None:
+        dr = ctx.drug_result
+        trace["stages"].append({
+            "stage": "2",
+            "name": "Drug Safety",
+            "triggered": bool(dr.interactions),
+            "drugs_found": [d.raw_name for d in dr.drugs_found],
+            "highest_severity": dr.highest_severity.value,
+            "interactions": [
+                {
+                    "drug_a": i.drug_a, "drug_b": i.drug_b,
+                    "severity": i.severity.value, "description": i.description,
+                    "source": i.source,
+                }
+                for i in dr.interactions
+            ],
+        })
+
+    # Stage 4a: Hallucination
+    if ctx.hallucination_result is not None:
+        hr = ctx.hallucination_result
+        trace["stages"].append({
+            "stage": "4a",
+            "name": "Hallucination Detection",
+            "triggered": bool(hr.flags),
+            "score": round(hr.hallucination_score, 3),
+            "blocked": hr.blocked,
+            "flags": [
+                {
+                    "type": f.type.value, "text": f.text,
+                    "confidence": round(f.confidence, 2), "explanation": f.explanation,
+                }
+                for f in hr.flags
+            ],
+            "annotated_text": hr.annotated_text if hr.flags else None,
+        })
+
+    return trace
 
 
 async def _ping_rxnorm() -> bool:

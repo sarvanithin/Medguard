@@ -92,13 +92,11 @@ class TestHealthEndpoint:
         assert "guardrails_enabled" in data
         assert data["guardrails_enabled"]["phi_detection"] is True
 
-    def test_root_returns_service_info(self, client):
+    def test_root_redirects_to_ui(self, client):
         c, _ = client
-        response = c.get("/")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["service"] == "medguard"
-        assert "/docs" in data["docs"]
+        response = c.get("/", follow_redirects=False)
+        assert response.status_code in (301, 302, 307, 308)
+        assert "/ui" in response.headers.get("location", "")
 
 
 class TestChatEndpoint:

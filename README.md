@@ -17,10 +17,10 @@ Wraps any LLM (Anthropic, OpenAI, Ollama) with five safety layers before and aft
 ## Install
 
 ```bash
-pip install medguard                          # core only
-pip install "medguard[anthropic]"             # + Anthropic LLM
-pip install "medguard[anthropic,openai]"      # + OpenAI-compatible
-pip install "medguard[anthropic,openai,nlp]"  # + Presidio PHI engine
+pip install medguard-llm                          # core only
+pip install "medguard-llm[anthropic]"             # + Anthropic LLM
+pip install "medguard-llm[anthropic,openai]"      # + OpenAI-compatible
+pip install "medguard-llm[anthropic,openai,nlp]"  # + Presidio PHI engine
 ```
 
 ## Quick start

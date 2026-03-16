@@ -145,6 +145,8 @@ class HallucinationDetector:
             tasks.append(self._check_drug_names(text))
         if self.config.check_dosages:
             tasks.append(self._check_dosages(text))
+        if self.config.check_medical_terms:
+            tasks.append(self._check_medical_terms(text))
         if self.config.check_confident_claims:
             tasks.append(self._check_confident_claims_async(text))
 
@@ -250,6 +252,44 @@ class HallucinationDetector:
                 )
 
         return flags
+
+    async def _check_medical_terms(self, text: str) -> list[HallucinationFlag]:
+        """Flag medical terminology that cannot be found in SNOMED."""
+        flags: list[HallucinationFlag] = []
+        candidates: list[tuple[str, int, int]] = []
+
+        for match in _MEDICAL_TERM_RE.finditer(text):
+            term = match.group(1).lower()
+            candidates.append((term, match.start(), match.end()))
+
+        if not candidates:
+            return flags
+
+        async def validate_term(term: str, start: int, end: int):
+            try:
+                # Fast path: bundled SNOMED concepts (no network)
+                if self._snomed.is_valid_concept(term):
+                    return None
+                # Slow path: Snowstorm API fallback
+                concepts = await self._snomed.find_concepts(term, limit=1)
+                if not concepts:
+                    return HallucinationFlag(
+                        type=HallucinationType.UNKNOWN_MEDICAL_TERM,
+                        text=text[start:end],
+                        start=start,
+                        end=end,
+                        confidence=0.6,
+                        explanation=(
+                            f"'{text[start:end]}' could not be found in SNOMED-CT. "
+                            "Verify this is a recognized medical term."
+                        ),
+                    )
+            except Exception:
+                pass
+            return None
+
+        results = await asyncio.gather(*[validate_term(t, s, e) for t, s, e in candidates])
+        return [r for r in results if r is not None]
 
     def _check_confident_claims(self, text: str) -> list[HallucinationFlag]:
         """Flag overconfident language without evidence qualifiers."""

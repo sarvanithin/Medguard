@@ -69,7 +69,7 @@ NEMO_YAML_CONFIG = '''
 models:
   - type: main
     engine: openai
-    model: gpt-3.5-turbo
+    model: gpt-4o-mini
 
 instructions:
   - type: general

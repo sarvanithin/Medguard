@@ -50,6 +50,7 @@ class HallucinationConfig(BaseModel):
     confidence_threshold: float = 0.7
     check_drug_names: bool = True
     check_dosages: bool = True
+    check_medical_terms: bool = True
     check_confident_claims: bool = True
 
 
@@ -85,6 +86,9 @@ class LLMConfig(BaseModel):
 class APIConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8080
+    # NOTE: cors_origins defaults to ["*"] for development/demo convenience.
+    # In production, restrict this to your specific frontend origin(s), e.g.:
+    #   MEDGUARD_API__CORS_ORIGINS='["https://your-app.example.com"]'
     cors_origins: list[str] = ["*"]
     log_level: str = "INFO"
     log_requests: bool = True

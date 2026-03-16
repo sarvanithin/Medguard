@@ -19,14 +19,14 @@ from medguard.knowledge.rxnorm import RxNormClient
 
 
 @pytest.fixture
-def drug_config():
+def drug_config(tmp_path):
     return DrugSafetyConfig(
         enabled=True,
         severity_threshold="moderate",
         use_openfda=True,
         use_rxnorm=True,
         use_static_fallback=True,
-        cache_ttl_seconds=0,
+        cache_ttl_seconds=3600,
     )
 
 
@@ -36,12 +36,14 @@ def http_client():
 
 
 @pytest.fixture
-def rxnorm_client(drug_config, http_client):
+def rxnorm_client(drug_config, http_client, tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
     return RxNormClient(drug_config, http_client)
 
 
 @pytest.fixture
-def openfda_client(drug_config, http_client):
+def openfda_client(drug_config, http_client, tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
     return OpenFDAClient(drug_config, http_client)
 
 

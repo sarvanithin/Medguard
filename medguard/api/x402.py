@@ -32,6 +32,7 @@ FREE_PATHS: set[str] = {
     "/docs",
     "/redoc",
     "/openapi.json",
+    "/v1/chat",
 }
 
 _SECRET = os.getenv("MPP_SECRET_KEY", "medguard-dev-secret")

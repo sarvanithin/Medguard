@@ -24,11 +24,10 @@ ENV MEDGUARD_API__HOST=0.0.0.0
 ENV MEDGUARD_API__PORT=8080
 
 RUN mkdir -p /config /cache
-VOLUME ["/config", "/cache"]
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD curl -f http://localhost:8080/v1/health || exit 1
+    CMD curl -f http://localhost:${MEDGUARD_API__PORT:-8080}/v1/health || exit 1
 
 CMD ["python", "-m", "medguard", "serve"]

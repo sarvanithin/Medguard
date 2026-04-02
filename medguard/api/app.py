@@ -13,6 +13,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from medguard.api.routes import router
+from medguard.api.x402 import X402Middleware
 
 _DESCRIPTION = """
 **medguard** — Healthcare-specific LLM guardrails middleware.
@@ -58,6 +59,7 @@ def create_app(medguard_instance=None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(X402Middleware)
 
     app.include_router(router)
 

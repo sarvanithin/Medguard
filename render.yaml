@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: medguard
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /v1/health
+    startCommand: sh -c 'python -m medguard serve --host 0.0.0.0 --port ${PORT:-8080}'
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: MPP_SECRET_KEY
+        value: medguard-secret
+      - key: X402_ENABLED
+        value: "true"

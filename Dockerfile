@@ -22,6 +22,10 @@ RUN pip install --no-cache-dir ".[${EXTRAS}]"
 ENV MEDGUARD_CONFIG=/config/config.json
 ENV MEDGUARD_API__HOST=0.0.0.0
 ENV MEDGUARD_API__PORT=8080
+ENV MEDGUARD_LLM__PROVIDER=openai
+ENV MEDGUARD_LLM__BASE_URL=https://api.withmartian.com/v1
+ENV MEDGUARD_LLM__API_KEY_ENV=MARTIAN_API_KEY
+ENV MEDGUARD_LLM__MODEL=gpt-4o
 
 RUN mkdir -p /config /cache
 

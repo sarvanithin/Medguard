@@ -35,6 +35,7 @@ FREE_PATHS: set[str] = {
 }
 
 _SECRET = os.getenv("MPP_SECRET_KEY", "medguard-dev-secret")
+_ENABLED = os.getenv("X402_ENABLED", "true").lower() != "false"
 
 
 def _valid_payment(token: str, path: str) -> bool:
@@ -56,6 +57,9 @@ def _valid_payment(token: str, path: str) -> bool:
 
 class X402Middleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if not _ENABLED:
+            return await call_next(request)
+
         path = request.url.path
 
         # Always free

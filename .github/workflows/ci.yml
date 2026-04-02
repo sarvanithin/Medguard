@@ -28,6 +28,8 @@ jobs:
         run: ruff check medguard/ tests/
 
       - name: Run unit tests
+        env:
+          X402_ENABLED: "false"
         run: pytest tests/ -m "not integration" -v --tb=short
 
   docker:

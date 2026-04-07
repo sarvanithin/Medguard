@@ -45,10 +45,12 @@ def _is_browser(request: Request) -> bool:
     """True for browser/UI requests — bypass payment so the hosted demo works."""
     if "Mozilla/" in request.headers.get("user-agent", ""):
         return True
+    if request.headers.get("X-HU-App") == "1":
+        return True
     origin = request.headers.get("origin", "")
     referer = request.headers.get("referer", "")
     for header in (origin, referer):
-        if header and any(h in header for h in ("onrender.com", "github.io", "localhost")):
+        if header and any(h in header for h in ("onrender.com", "github.io", "localhost", "healthuniverse.com")):
             return True
     return False
 

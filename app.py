@@ -7,7 +7,7 @@ import requests
 import streamlit as st
 
 API = "https://medguard-ru03.onrender.com"
-HEADERS = {"Content-Type": "application/json"}
+HEADERS = {"Content-Type": "application/json", "X-HU-App": "1"}
 
 st.set_page_config(
     page_title="MedGuard — Clinical LLM Safety",

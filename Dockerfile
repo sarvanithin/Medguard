@@ -13,7 +13,7 @@ COPY medguard/ ./medguard/
 
 # Default install: core + Anthropic + OpenAI integrations
 # For NLP tier: docker build --build-arg EXTRAS=anthropic,openai,nlp
-ARG EXTRAS="anthropic,openai"
+ARG EXTRAS="api,anthropic,openai"
 RUN pip install --no-cache-dir ".[${EXTRAS}]"
 
 # Optional: download spaCy model if nlp extras included

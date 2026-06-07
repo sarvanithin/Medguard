@@ -70,6 +70,11 @@ class MedGuard:
         self.fact_verifier: FactVerifier | None = None
         self._llm_caller: LLMCallerProtocol | None = None
 
+        try:
+            self._llm_caller = _build_llm_caller(self.config)
+        except Exception as exc:
+            log.warning("llm_caller_init_failed", error=str(exc))
+
         self._build_components()
         self.pipeline = self._build_pipeline()
 
@@ -204,7 +209,7 @@ class MedGuard:
             try:
                 import httpx
 
-                from medguard.guardrails.fact_check import FactVerifier
+                from medguard.guardrails.fact_check import AgentFactVerifier, FactVerifier
                 from medguard.knowledge.pubmed import PubMedClient
 
                 if not hasattr(self, "_http_client"):
@@ -213,18 +218,24 @@ class MedGuard:
                     self._http_client,
                     max_results=cfg.guardrails.fact_checking.max_claims_per_response,
                 )
-                self.fact_verifier = FactVerifier(
-                    pubmed,
-                    confidence_threshold=cfg.guardrails.fact_checking.confidence_threshold,
+                verifier_cls = (
+                    AgentFactVerifier
+                    if cfg.guardrails.fact_checking.use_agent
+                    else FactVerifier
                 )
+                if verifier_cls is AgentFactVerifier:
+                    self.fact_verifier = verifier_cls(
+                        pubmed,
+                        self._llm_caller,
+                        confidence_threshold=cfg.guardrails.fact_checking.confidence_threshold,
+                    )
+                else:
+                    self.fact_verifier = verifier_cls(
+                        pubmed,
+                        confidence_threshold=cfg.guardrails.fact_checking.confidence_threshold,
+                    )
             except Exception as exc:
                 log.warning("fact_verifier_init_failed", error=str(exc))
-
-        # LLM caller
-        try:
-            self._llm_caller = _build_llm_caller(cfg)
-        except Exception as exc:
-            log.warning("llm_caller_init_failed", error=str(exc))
 
     def _build_pipeline(self) -> GuardrailPipeline:
         return GuardrailPipeline(

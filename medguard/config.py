@@ -56,6 +56,7 @@ class HallucinationConfig(BaseModel):
 
 class FactCheckConfig(BaseModel):
     enabled: bool = False  # opt-in: requires network calls to PubMed
+    use_agent: bool = False  # opt-in: requires an LLM caller for agent reasoning
     confidence_threshold: float = 0.4
     max_claims_per_response: int = 5
     ncbi_api_key_env: str = "NCBI_API_KEY"

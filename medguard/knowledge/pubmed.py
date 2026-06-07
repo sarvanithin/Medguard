@@ -44,6 +44,7 @@ class FactEvidence:
     verified: bool = False
     confidence: float = 0.0
     summary: str = ""
+    reasoning: str = ""
 
 
 class PubMedClient:
